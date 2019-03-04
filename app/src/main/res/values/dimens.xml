@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="dots_height">30dp</dimen>
+    <dimen name="dots_margin_bottom">20dp</dimen>
+    <dimen name="img_width_height">150dp</dimen>
+    <dimen name="slide_title">18sp</dimen>
+    <dimen name="slide_desc">18sp</dimen>
+    <dimen name="desc_padding">20dp</dimen>
+    <dimen name="guidelines_image_size">200dp</dimen>
+    <dimen name="guidelines_image_border">7dp</dimen>
+    <dimen name="bottom_tab_text">14sp</dimen>
+    <dimen name="margin_left">40dp</dimen>
+    <dimen name="item_size">80dp</dimen>
+    <dimen name="margin_top">10dp</dimen>
+    <dimen name="dialog_size_width">300dp</dimen>
+    <dimen name="dialog_size_height">300dp</dimen>
+    <dimen name="button_height">50dp</dimen>
+    <dimen name="slide_title_dialog">14sp</dimen>
+    <dimen name="margin_from_top_login_pop_up">20dp</dimen>
+    <dimen name="alert_dialog_size_height">230dp</dimen>
+    <dimen name="alert_margin_top">50dp</dimen>
+    <dimen name="detail_backdrop_height">250dp</dimen>
+    <dimen name="slide_title_min">14sp</dimen>
+    <dimen name="bottom_height">240dp</dimen>
+    <dimen name="bottom_width">180dp</dimen>
+    <dimen name="view_height">260dp</dimen>
+    <dimen name="marker_popup_width">260dp</dimen>
+    <dimen name="marker_popup_image_width">120dp</dimen>
+    <dimen name="bottom_height_marker_pop_up">160dp</dimen>
+    <dimen name="bottom_height_marker_pop_up_image">100dp</dimen>
+    <dimen name="bottom_height_marker_pop">115dp</dimen>
+    <dimen name="markr_pop_up_text_size">12sp</dimen>
+
+</resources>
