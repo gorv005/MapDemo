@@ -53,6 +53,11 @@ import com.np.mapdemo.model.LegsObject;
 import com.np.mapdemo.model.PolylineObject;
 import com.np.mapdemo.model.RouteObject;
 import com.np.mapdemo.model.StepsObject;
+import com.np.mapdemo.model.places.PlacesPOJO;
+import com.np.mapdemo.model.places.ResultDistanceMatrix;
+import com.np.mapdemo.model.places.StoreModel;
+import com.np.mapdemo.retrofit.APIClient;
+import com.np.mapdemo.retrofit.ApiInterface;
 import com.np.mapdemo.util.AppConstants;
 import com.np.mapdemo.util.GpsUtils;
 import com.np.mapdemo.util.GsonRequest;
@@ -65,9 +70,17 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import noman.googleplaces.NRPlaces;
+import noman.googleplaces.Place;
+import noman.googleplaces.PlaceType;
+import noman.googleplaces.PlacesException;
+import noman.googleplaces.PlacesListener;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.OnConnectionFailedListener, PlacesListener {
     @BindView(R.id.mapview)
     MapView mapview;
     @BindView(R.id.btnDirection)
@@ -85,6 +98,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     BottomSheetBehavior mBottomSheetBehavior2;
     private List<LatLng> latLngList;
     private MarkerOptions SourceLocationMarker;
+    private ArrayList<String> permissionsToRequest;
+    private ArrayList<String> permissionsRejected = new ArrayList<>();
+    private ArrayList<String> permissions = new ArrayList<>();
+    private final static int ALL_PERMISSIONS_RESULT = 101;
+    List<StoreModel> storeModels;
+    ApiInterface apiService;
+
+    String latLngString;
+    LatLng latLng;
+    List<PlacesPOJO.CustomA> results;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,8 +155,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onSlide(View bottomSheet, float slideOffset) {
             }
         });
+
     }
 
+   void getSchools(){
+     //  apiService = APIClient.getClient().create(ApiInterface.class);
+     //  fetchStores("school","school");
+
+       new NRPlaces.Builder()
+               .listener(this)
+               .key(APIClient.GOOGLE_PLACE_API_KEY)
+               .latlng(latLng.latitude, latLng.longitude)
+               .radius(1500).type(PlaceType.SCHOOL)
+               .build()
+               .execute();
+    }
     void setLocationRequest() {
         locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -213,6 +249,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 for (Location location : locationResult.getLocations()) {
                     if (location != null) {
+                       latLng=new LatLng(location.getLatitude(),location.getLongitude());
+                        latLngString = location.getLatitude() + "," + location.getLongitude();
                         setMapLocation(location);
 
                     }
@@ -238,12 +276,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Place current location marker
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         setGeoFence(latLng);
-        SourceLocationMarker = new MarkerOptions();
+       /* SourceLocationMarker = new MarkerOptions();
         SourceLocationMarker.position(latLng);
         // markerOptions.title("Current Position");
         SourceLocationMarker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
         mCurrLocationMarker = mMap.addMarker(SourceLocationMarker);
-
+*/
         //move map camera
 
        /* CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(15.0f).build();
@@ -405,7 +443,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             circleOptions.center(point);
 
             // Radius of the circle
-            circleOptions.radius(16.0934 * 1609.34);// Converting Miles into Meters...
+            circleOptions.radius(1 * 1609.34);// Converting Miles into Meters...
 
             // Border color of the circle
             circleOptions.strokeColor(Color.parseColor("#fff0f5"));
@@ -418,7 +456,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //circleOptions.fillColor(Color.parseColor("#F8F4E3"));
 
             // Border width of the circle
-            circleOptions.strokeWidth(150);
+            circleOptions.strokeWidth(50);
 
            /* circle.remove();
         }*/
@@ -434,8 +472,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             //move map camera
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, animateZomm));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(currentZoomLevel), 2000, null);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 14));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(14), 2000, null);
+            getSchools();
         }
     }
 
@@ -568,5 +607,175 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng latLng=new LatLng(28.540600,77.212967);
 
         getDirection(latLng);
+    }
+
+
+
+
+    public void fetchStores(String placeType, String businessName) {
+
+
+        /**
+         * For Locations In India McDonalds stores aren't returned accurately
+         */
+
+        //Call<PlacesPOJO.Root> call = apiService.doPlaces(placeType, latLngString,"\""+ businessName +"\"", true, "distance", APIClient.GOOGLE_PLACE_API_KEY);
+
+        Call<PlacesPOJO.Root> call = apiService.doPlaces(placeType, latLngString, businessName, true, "distance", APIClient.GOOGLE_PLACE_API_KEY);
+        call.enqueue(new Callback<PlacesPOJO.Root>() {
+
+            @Override
+            public void onResponse(Call<PlacesPOJO.Root> call, retrofit2.Response<PlacesPOJO.Root> response) {
+                PlacesPOJO.Root root = response.body();
+
+
+                if (response.isSuccessful()) {
+
+                    if (root.status.equals("OK")) {
+
+                        results = root.customA;
+                        storeModels = new ArrayList<>();
+                        for (int i = 0; i < results.size(); i++) {
+
+                            if (i == 10)
+                                break;
+                            PlacesPOJO.CustomA info = results.get(i);
+
+                            storeModels.add(new StoreModel(info.name, info.vicinity, "", "",info.geometry.locationA.lat,info.geometry.locationA.lng));
+
+
+                           // fetchDistance(info);
+
+                        }
+                        for(int i=0;i<storeModels.size();i++) {
+                            if(i%2==0) {
+                                final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.primary)));
+
+                            }//    markers.put(hamburg.getId(), "http://img.india-forums.com/images/100x100/37525-a-still-image-of-akshay-kumar.jpg");
+                            else if(i%3==0) {
+                                final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.upper_primary)));
+
+                            }
+                            else if(i%5==0) {
+                                final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.secondary)));
+
+                            }
+                            else {
+                                final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.higher_secondary)));
+
+                            }
+                        }
+
+                    } else {
+                        Toast.makeText(getApplicationContext(), "No matches found near you", Toast.LENGTH_SHORT).show();
+                    }
+
+                } else if (response.code() != 200) {
+                    Toast.makeText(getApplicationContext(), "Error " + response.code() + " found.", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<PlacesPOJO.Root> call, Throwable t) {
+                // Log error here since request failed
+                call.cancel();
+            }
+        });
+
+
+    }
+    private void fetchDistance(final PlacesPOJO.CustomA info) {
+
+        Call<ResultDistanceMatrix> call = apiService.getDistance(APIClient.GOOGLE_PLACE_API_KEY, latLngString, info.geometry.locationA.lat + "," + info.geometry.locationA.lng);
+        call.enqueue(new Callback<ResultDistanceMatrix>() {
+
+            @Override
+            public void onResponse(Call<ResultDistanceMatrix> call, retrofit2.Response<ResultDistanceMatrix> response) {
+
+                ResultDistanceMatrix resultDistance = response.body();
+                if ("OK".equalsIgnoreCase(resultDistance.status)) {
+
+                    ResultDistanceMatrix.InfoDistanceMatrix infoDistanceMatrix = resultDistance.rows.get(0);
+                    ResultDistanceMatrix.InfoDistanceMatrix.DistanceElement distanceElement = infoDistanceMatrix.elements.get(0);
+                    if ("OK".equalsIgnoreCase(distanceElement.status)) {
+                        ResultDistanceMatrix.InfoDistanceMatrix.ValueItem itemDuration = distanceElement.duration;
+                        ResultDistanceMatrix.InfoDistanceMatrix.ValueItem itemDistance = distanceElement.distance;
+                        String totalDistance = String.valueOf(itemDistance.text);
+                        String totalDuration = String.valueOf(itemDuration.text);
+
+                        /*if (storeModels.size() == 10 || storeModels.size() == results.size()) {
+                            RecyclerViewAdapter adapterStores = new RecyclerViewAdapter(results, storeModels);
+                            recyclerView.setAdapter(adapterStores);
+                        }*/
+
+                    }
+
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<ResultDistanceMatrix> call, Throwable t) {
+                call.cancel();
+            }
+        });
+
+    }
+
+    @Override
+    public void onPlacesFailure(PlacesException e) {
+
+    }
+
+    @Override
+    public void onPlacesStart() {
+
+    }
+
+    @Override
+    public void onPlacesSuccess(List<Place> places) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                storeModels = new ArrayList<>();
+                for (int i = 0; i < places.size(); i++) {
+
+                    if (i == 10)
+                        break;
+                    Place info = places.get(i);
+
+                    storeModels.add(new StoreModel(info.getName(), info.getVicinity(), "", "",""+info.getLatitude(),""+info.getLongitude()));
+                    // fetchDistance(info);
+
+                }
+
+                for(int i=0;i<storeModels.size();i++) {
+                    if(i%2==0) {
+                        final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.primary)));
+
+                    }//    markers.put(hamburg.getId(), "http://img.india-forums.com/images/100x100/37525-a-still-image-of-akshay-kumar.jpg");
+                    else if(i%3==0) {
+                        final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.upper_primary)));
+
+                    }
+                    else if(i%5==0) {
+                        final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.secondary)));
+
+                    }
+                    else {
+                        final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.higher_secondary)));
+
+                    }
+                }
+            }
+        });
+
+
+    }
+
+    @Override
+    public void onPlacesFinished() {
+
     }
 }
