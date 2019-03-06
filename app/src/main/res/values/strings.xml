@@ -6,4 +6,7 @@
     <string name="app_permission_notice">This permission request is very important to your app functionality. If it is not granted your app might not work the way it is intended</string>
     <string name="failed_draw">Empty line path return</string>
     <string name="server_error">Server error. Something when wrong with the server</string>
+    <string name="Select_Raduis">Select Radius(In Miles)</string>
+    <string name="school_info">School Details</string>
+    <string name="school_data">School Data</string>
 </resources>

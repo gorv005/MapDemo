@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -59,9 +60,11 @@ import com.np.mapdemo.model.places.StoreModel;
 import com.np.mapdemo.retrofit.APIClient;
 import com.np.mapdemo.retrofit.ApiInterface;
 import com.np.mapdemo.util.AppConstants;
+import com.np.mapdemo.util.AppUtils;
 import com.np.mapdemo.util.GpsUtils;
 import com.np.mapdemo.util.GsonRequest;
 import com.np.mapdemo.util.Helper;
+import com.np.mapdemo.util.SeekbarWithIntervals;
 import com.np.mapdemo.util.VolleySingleton;
 
 import java.util.ArrayList;
@@ -83,8 +86,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.OnConnectionFailedListener, PlacesListener {
     @BindView(R.id.mapview)
     MapView mapview;
-    @BindView(R.id.btnDirection)
-    Button btnDirection;
+  /*  @BindView(R.id.btnDirection)
+    Button btnDirection;*/
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest locationRequest;
@@ -104,10 +107,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final static int ALL_PERMISSIONS_RESULT = 101;
     List<StoreModel> storeModels;
     ApiInterface apiService;
-
     String latLngString;
     LatLng latLng;
     List<PlacesPOJO.CustomA> results;
+    private SeekbarWithIntervals SeekbarWithIntervals = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,10 +123,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ButterKnife.bind(this);
         latLngList = new ArrayList<LatLng>();
 
-        final View bottomSheet2 = findViewById(R.id.bottom_sheet);
+        final View bottomSheet2 = findViewById(R.id.bottom_sheet_1);
         mBottomSheetBehavior2 = BottomSheetBehavior.from(bottomSheet2);
         mBottomSheetBehavior2.setHideable(false);
-        mBottomSheetBehavior2.setPeekHeight(0);
+        mBottomSheetBehavior2.setPeekHeight(200);
         mBottomSheetBehavior2.setState(BottomSheetBehavior.STATE_COLLAPSED);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -155,20 +158,60 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onSlide(View bottomSheet, float slideOffset) {
             }
         });
-
+        initSeekBar();
     }
 
-   void getSchools(){
-     //  apiService = APIClient.getClient().create(ApiInterface.class);
-     //  fetchStores("school","school");
+    void initSeekBar(){
+        List<String> seekbarIntervals = getIntervals();
+        getSeekbarWithIntervals().setIntervals(seekbarIntervals);
 
-       new NRPlaces.Builder()
+        getSeekbarWithIntervals().setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+              //  Toast.makeText(MainActivity.this, "onStopTrackingTouch", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private List<String> getIntervals() {
+        return new ArrayList<String>() {{
+            add("1");
+            add("2");
+            add("3");
+            add("4");
+            add("5");
+            add("6");
+            add("7");
+        }};
+    }
+
+    private SeekbarWithIntervals getSeekbarWithIntervals() {
+        if (SeekbarWithIntervals == null) {
+            SeekbarWithIntervals = (SeekbarWithIntervals) findViewById(R.id.seekbarWithIntervals);
+        }
+
+        return SeekbarWithIntervals;
+    }
+   void getSchools(){
+       apiService = APIClient.getClient().create(ApiInterface.class);
+       fetchStores("school","school");
+
+     /*  new NRPlaces.Builder()
                .listener(this)
                .key(APIClient.GOOGLE_PLACE_API_KEY)
                .latlng(latLng.latitude, latLng.longitude)
                .radius(1500).type(PlaceType.SCHOOL)
                .build()
-               .execute();
+               .execute();*/
     }
     void setLocationRequest() {
         locationRequest = LocationRequest.create();
@@ -189,17 +232,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapInstance.clear();
     }
 
-    void getDirection(LatLng latLng) {
+    void getDirection(LatLng l, int p) {
         if (latLngList.size() > 0) {
-            refreshMap(mMap);
+
             latLngList.clear();
         }
+        refreshMap(mMap);
+        SourceLocationMarker = new MarkerOptions();
+        SourceLocationMarker.position(latLng);
+        // markerOptions.title("Current Position");
+        SourceLocationMarker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        mCurrLocationMarker = mMap.addMarker(SourceLocationMarker);
         latLngList.add(latLng);
         //    Log.d(TAG, "Marker number " + latLngList.size());
         mMap.addMarker(SourceLocationMarker);
-        mMap.addMarker(new MarkerOptions().position(latLng));
+        int color=AppUtils.getMarkerColor(p);
+        if(color==AppConstants.RED) {
+            mMap.addMarker(new MarkerOptions().position(l).icon(BitmapDescriptorFactory.fromResource(R.drawable.primary)));
+        }
+
+    else if(color==AppConstants.GREEN) {
+            mMap.addMarker(new MarkerOptions().position(l).icon(BitmapDescriptorFactory.fromResource(R.drawable.upper_primary)));
+
+        }
+        else if(color==AppConstants.VIOLET) {
+            mMap.addMarker(new MarkerOptions().position(l).icon(BitmapDescriptorFactory.fromResource(R.drawable.secondary)));
+
+        }
+        else  {
+            mMap.addMarker(new MarkerOptions().position(l).icon(BitmapDescriptorFactory.fromResource(R.drawable.higher_secondary)));
+
+
+        }
         LatLng defaultLocation = SourceLocationMarker.getPosition();
-        LatLng destinationLocation = latLng;
+        LatLng destinationLocation = l;
         //use Google Direction API to get the route between these Locations
         String directionApiPath = Helper.getUrl(String.valueOf(defaultLocation.latitude), String.valueOf(defaultLocation.longitude),
                 String.valueOf(destinationLocation.latitude), String.valueOf(destinationLocation.longitude));
@@ -212,8 +278,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mBottomSheetBehavior2.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             mBottomSheetBehavior2.setState(BottomSheetBehavior.STATE_COLLAPSED);
         } else if (mBottomSheetBehavior2.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
-            mBottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
+            mBottomSheetBehavior2.setState(BottomSheetBehavior.PEEK_HEIGHT_AUTO);
         }
+
 
     }
 
@@ -329,7 +396,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                setBehavior();
+
+                if (mBottomSheetBehavior2.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                    getDirection(marker.getPosition(), Integer.parseInt(marker.getTitle()));
+                    setBehavior();
+                }
                 return false;
             }
         });
@@ -563,7 +634,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Polyline polyline = map.addPolyline(options);
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(positions.get(p).latitude, positions.get(p).longitude))
-                .zoom(12)
+                .zoom(15)
                 .build();
         map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
@@ -602,12 +673,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return poly;
     }
 
-    @OnClick(R.id.btnDirection)
+  /*  @OnClick(R.id.btnDirection)
     public void onViewClicked() {
         LatLng latLng=new LatLng(28.540600,77.212967);
 
-        getDirection(latLng);
-    }
+      //  getDirection(latLng);
+    }*/
 
 
 
@@ -648,19 +719,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         }
                         for(int i=0;i<storeModels.size();i++) {
-                            if(i%2==0) {
+                            int color= AppUtils.getMarkerColor(i);
+                            if(color==AppConstants.RED) {
                                 final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.primary)));
 
                             }//    markers.put(hamburg.getId(), "http://img.india-forums.com/images/100x100/37525-a-still-image-of-akshay-kumar.jpg");
-                            else if(i%3==0) {
+                            else if(color==AppConstants.GREEN) {
                                 final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.upper_primary)));
 
                             }
-                            else if(i%5==0) {
+                            else if(color==AppConstants.VIOLET) {
                                 final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.secondary)));
 
                             }
-                            else {
+                            else  {
                                 final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.higher_secondary)));
 
                             }
@@ -751,19 +823,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
                 for(int i=0;i<storeModels.size();i++) {
-                    if(i%2==0) {
+                    int color= AppUtils.getMarkerColor(i);
+                    if(color==AppConstants.RED) {
                         final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.primary)));
 
                     }//    markers.put(hamburg.getId(), "http://img.india-forums.com/images/100x100/37525-a-still-image-of-akshay-kumar.jpg");
-                    else if(i%3==0) {
+                    else if(color==AppConstants.GREEN) {
                         final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.upper_primary)));
 
                     }
-                    else if(i%5==0) {
+                    else if(color==AppConstants.VIOLET) {
                         final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.secondary)));
 
                     }
-                    else {
+                   else  {
                         final Marker hamburg = mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(storeModels.get(i).lat), Double.parseDouble(storeModels.get(i).longi))).title("" + i).icon(BitmapDescriptorFactory.fromResource(R.drawable.higher_secondary)));
 
                     }
