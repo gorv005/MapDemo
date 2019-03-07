@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- never store your S3 credentials like this in a real app! -->
+    <string name="s3_access_key">AKIAJ6ELWMSDUZ4FCIUQ</string>
+    <string name="s3_secret">lfLI7A0ZQzXZ0wMVB/lrWiE0e0ImS7gG2bzEF4k/</string>
+    <string name="s3_bucket">anselmo-roadsafety-dev</string>
+
+</resources>
