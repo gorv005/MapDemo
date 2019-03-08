@@ -23,7 +23,6 @@ import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.np.mapdemo.aws.UploadService;
 
 import net.alhazmy13.mediapicker.Image.ImagePicker;
 
@@ -77,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // interrupt any active upload
-                Intent intent = new Intent(UploadService.UPLOAD_CANCELLED_ACTION);
-                sendBroadcast(intent);
+               /* Intent intent = new Intent(UploadService.UPLOAD_CANCELLED_ACTION);
+                sendBroadcast(intent);*/
             }
         });
 
@@ -150,14 +149,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        IntentFilter f = new IntentFilter();
+        /*IntentFilter f = new IntentFilter();
         f.addAction(UploadService.UPLOAD_STATE_CHANGED_ACTION);
-        registerReceiver(uploadStateReceiver, f);
+        registerReceiver(uploadStateReceiver, f);*/
     }
 
     @Override
     protected void onStop() {
-        unregisterReceiver(uploadStateReceiver);
+    //    unregisterReceiver(uploadStateReceiver);
         super.onStop();
     }
 
@@ -167,9 +166,9 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == ImagePicker.IMAGE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
             List<String> mPaths = data.getStringArrayListExtra(ImagePicker.EXTRA_IMAGE_PATH);
             mImageList.add(mPaths.get(0));
-            Intent intent = new Intent(this, UploadService.class);
+           /* Intent intent = new Intent(this, UploadService.class);
             intent.putExtra(UploadService.ARG_FILE_PATH, mPaths.get(0));
-            startService(intent);
+            startService(intent);*/
          //  upload(mPaths.get(0));
             //Your Code
         }
@@ -181,9 +180,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("S3", "uri=" + uri.toString());
                 Log.d("S3", "path=" + path);
                 // initiate the upload
-                Intent intent = new Intent(this, UploadService.class);
+             /*   Intent intent = new Intent(this, UploadService.class);
                 intent.putExtra(UploadService.ARG_FILE_PATH, path);
-                startService(intent);
+                startService(intent);*/
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -212,11 +211,11 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver uploadStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Bundle b = intent.getExtras();
+           /* Bundle b = intent.getExtras();
             status.setText(b.getString(UploadService.MSG_EXTRA));
             int percent = b.getInt(UploadService.PERCENT_EXTRA);
             progress.setIndeterminate(percent < 0);
-            progress.setProgress(percent);
+            progress.setProgress(percent);*/
         }
     };
 }
